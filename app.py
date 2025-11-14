@@ -34,12 +34,12 @@ def index():
 def main():
     global first_time
     if first_time==1:
-        input = request.form.get("input")
-        print(input)
+        q = request.form.get("q")
+        print(q)
         t = datetime.datetime.now()
         conn = sqlite3.connect('user.db')
         c = conn.cursor()
-        c.execute("insert into users(name,timestamp) values(?,?)",(input,t))
+        c.execute("insert into users(name,timestamp) values(?,?)",(q,t))
         conn.commit()
         c.close()
         conn.close()
@@ -52,10 +52,10 @@ def gemini():
 
 @app.route("/gemini_reply",methods=["GET","POST"])
 def gemini_reply():
-    query = request.form.get("query")
-    print(query)
-    resp = model.generate_content(query)
-    return(render_template("gemini_reply.html",r=resp.text))
+    q = request.form.get("q")
+    print(q)
+    r = model.generate_content(q)
+    return(render_template("gemini_reply.html",r=r.text))
 
 @app.route("/paynow",methods=["GET","POST"])
 def paynow():
