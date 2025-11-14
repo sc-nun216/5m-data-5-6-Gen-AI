@@ -1,6 +1,8 @@
 #gemini
 
-from flask import Flask,request,render_template
+from flask import Flask,request,render_template 
+# Flask framework: Flask (to create the web app), render_template (to display HTML files), and request (to get data from forms)
+
 import google.generativeai as genai1
 from google import genai
 import os
@@ -8,13 +10,14 @@ import sqlite3
 import datetime
 import requests
 
+# Retrieves the confidential Gemini API key from the system's environment variables
 gemini_api_key = os.getenv("gemini_api_key")
 
 genmini_client = genai.Client(api_key=gemini_api_key)
-genmini_model = "gemini-2.0-flash"
+genmini_model = "gemini-2.5-flash"
 
 genai1.configure(api_key=gemini_api_key)
-model = genai1.GenerativeModel("gemini-2.0-flash")
+model = genai1.GenerativeModel("gemini-2.5-flash")
 
 gemini_telegram_token = os.getenv('GEMINI_TELEGRAM_TOKEN')
 
@@ -22,6 +25,7 @@ app = Flask(__name__)
 
 first_time = 1
 
+# User Entry Point, landing page
 @app.route("/",methods=["GET","POST"])
 def index():
     return(render_template("index.html"))
@@ -30,12 +34,12 @@ def index():
 def main():
     global first_time
     if first_time==1:
-        q = request.form.get("q")
-        print(q)
+        input = request.form.get("input")
+        print(input)
         t = datetime.datetime.now()
         conn = sqlite3.connect('user.db')
         c = conn.cursor()
-        c.execute("insert into users(name,timestamp) values(?,?)",(q,t))
+        c.execute("insert into users(name,timestamp) values(?,?)",(input,t))
         conn.commit()
         c.close()
         conn.close()
@@ -48,10 +52,10 @@ def gemini():
 
 @app.route("/gemini_reply",methods=["GET","POST"])
 def gemini_reply():
-    q = request.form.get("q")
-    print(q)
-    r = model.generate_content(q)
-    return(render_template("gemini_reply.html",r=r.text))
+    query = request.form.get("query")
+    print(query)
+    resp = model.generate_content(query)
+    return(render_template("gemini_reply.html",r=resp.text))
 
 @app.route("/paynow",methods=["GET","POST"])
 def paynow():
@@ -67,10 +71,11 @@ def prediction_reply():
     print(q)
     return(render_template("prediction_reply.html",r=90.2 + (-50.6*q)))
 
-@app.route("/start_telegram",methods=["GET","POST"])
+
+@app.route("/start_telegram",methods=["GET","POST"]) # `start_telegram` Initializes the Telegram Bot 
 def start_telegram():
 
-    domain_url = os.getenv('WEBHOOK_URL')
+    domain_url = os.getenv('WEBHOOK_URL') 
 
     # The following line is used to delete the existing webhook URL for the Telegram bot
     delete_webhook_url = f"https://api.telegram.org/bot{gemini_telegram_token}/deleteWebhook"
@@ -117,9 +122,9 @@ def telegram():
     # if the server doesn't respond in time
     return('ok', 200)
 
-
+# Displays a log of all users who have accessed the main menu
 @app.route("/user_log",methods=["GET","POST"])
-def user_log():
+def user_log(): 
     #read
     conn = sqlite3.connect('user.db')
     c = conn.cursor()
@@ -132,6 +137,7 @@ def user_log():
     conn.close()
     return(render_template("user_log.html",r=r))
 
+# Clears all user history from the database.
 @app.route("/delete_log",methods=["GET","POST"])
 def delete_log():
     conn = sqlite3.connect('user.db')
@@ -142,6 +148,7 @@ def delete_log():
     conn.close()
     return(render_template("delete_log.html"))
 
+# Handles application logout/reset state.
 @app.route("/logout",methods=["GET","POST"])
 def logout():
     global first_time
